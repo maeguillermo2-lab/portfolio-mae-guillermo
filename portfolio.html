@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Maé Guillermo — Portfolio</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,700;1,300&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy-deep: #050d1a;
+    --navy-mid: #0a1628;
+    --navy-light: #0f2040;
+    --navy-muted: #162a4a;
+    --white: #f0f4ff;
+    --white-dim: rgba(240,244,255,0.6);
+    --white-faint: rgba(240,244,255,0.15);
+    --gold: #c9a84c;
+    --gold-light: #e8c96e;
+    --gold-dim: rgba(201,168,76,0.3);
+    --accent-blue: #3b7dd8;
+    --accent-glow: rgba(59,125,216,0.25);
+    --text-body: #b8c8e8;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--navy-deep);
+    color: var(--white);
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 300;
+    overflow-x: hidden;
+    cursor: none;
+  }
+
+  /* CURSOR — fluide avec lerp RAF */
+  .cursor {
+    position: fixed;
+    width: 8px; height: 8px;
+    background: var(--gold);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9999;
+    transform: translate(-50%, -50%);
+    mix-blend-mode: screen;
+    will-change: transform, left, top;
+  }
+  .cursor-ring {
+    position: fixed;
+    width: 32px; height: 32px;
+    border: 1px solid var(--gold-dim);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9998;
+    transform: translate(-50%, -50%);
+    transition: width 0.3s ease, height 0.3s ease, border-color 0.3s ease;
+    will-change: left, top;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 1;
+    opacity: 0.4;
+  }
+
+  /* NAV */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    padding: 24px 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: linear-gradient(to bottom, rgba(5,13,26,0.95), transparent);
+    backdrop-filter: blur(12px);
+  }
+  .nav-logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.4rem;
+    letter-spacing: 0.2em;
+    color: var(--gold);
+    text-decoration: none;
+  }
+  .nav-links { display: flex; gap: 40px; list-style: none; }
+  .nav-links a {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--white-dim);
+    text-decoration: none;
+    transition: color 0.3s;
+    position: relative;
+  }
+  .nav-links a::after {
+    content: '';
+    position: absolute;
+    bottom: -4px; left: 0;
+    width: 0; height: 1px;
+    background: var(--gold);
+    transition: width 0.3s;
+  }
+  .nav-links a:hover { color: var(--white); }
+  .nav-links a:hover::after { width: 100%; }
+
+  /* HERO */
+  #hero {
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: center;
+    padding: 0 60px;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero-bg {
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse 60% 80% at 70% 50%, rgba(59,125,216,0.12) 0%, transparent 70%),
+      radial-gradient(ellipse 40% 60% at 20% 80%, rgba(201,168,76,0.06) 0%, transparent 60%),
+      linear-gradient(135deg, var(--navy-deep) 0%, #060f1f 50%, var(--navy-deep) 100%);
+  }
+  .hero-grid-lines {
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(rgba(59,125,216,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(59,125,216,0.04) 1px, transparent 1px);
+    background-size: 80px 80px;
+  }
+  .hero-content { position: relative; z-index: 2; }
+  .hero-tag {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    opacity: 0;
+    animation: fadeUp 0.8s 0.2s forwards;
+  }
+  .hero-tag::before { content: ''; width: 32px; height: 1px; background: var(--gold); }
+  .hero-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(4rem, 8vw, 7rem);
+    line-height: 0.9;
+    letter-spacing: 0.02em;
+    margin-bottom: 16px;
+    opacity: 0;
+    animation: fadeUp 0.8s 0.4s forwards;
+  }
+  .hero-name span {
+    display: block;
+    background: linear-gradient(135deg, var(--white) 0%, var(--white-dim) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .hero-name .name-accent {
+    background: linear-gradient(135deg, var(--gold-light) 0%, var(--gold) 60%, #a87a2a 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .hero-role {
+    font-size: 1.05rem;
+    font-weight: 300;
+    color: var(--text-body);
+    max-width: 480px;
+    line-height: 1.7;
+    margin-bottom: 48px;
+    opacity: 0;
+    animation: fadeUp 0.8s 0.6s forwards;
+  }
+  .hero-cta {
+    display: flex; gap: 20px; align-items: center;
+    opacity: 0; animation: fadeUp 0.8s 0.8s forwards;
+  }
+  .btn-primary {
+    padding: 14px 36px;
+    background: linear-gradient(135deg, var(--gold), #a87a2a);
+    color: var(--navy-deep);
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    text-decoration: none;
+    font-weight: 700;
+    clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
+    transition: all 0.3s;
+  }
+  .btn-primary:hover { background: linear-gradient(135deg, var(--gold-light), var(--gold)); transform: translateY(-2px); }
+  .btn-secondary {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--white-dim);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: color 0.3s;
+  }
+  .btn-secondary::after { content: '→'; transition: transform 0.3s; }
+  .btn-secondary:hover { color: var(--white); }
+  .btn-secondary:hover::after { transform: translateX(4px); }
+
+  .hero-visual {
+    position: relative; z-index: 2;
+    display: flex; justify-content: center; align-items: center;
+  }
+  .hero-avatar-wrap {
+    position: relative; width: 320px; height: 320px;
+    opacity: 0; animation: fadeIn 1s 0.6s forwards;
+  }
+  .hero-avatar-ring {
+    position: absolute; inset: -20px;
+    border-radius: 50%;
+    border: 1px solid var(--gold-dim);
+    animation: rotate 20s linear infinite;
+  }
+  .hero-avatar-ring::before {
+    content: ''; position: absolute;
+    top: 10px; left: 50%;
+    width: 6px; height: 6px;
+    background: var(--gold); border-radius: 50%;
+    transform: translateX(-50%);
+  }
+  .hero-avatar-inner {
+    position: absolute; inset: 0;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--navy-light), var(--navy-mid));
+    border: 1px solid var(--white-faint);
+    display: flex; align-items: center; justify-content: center;
+    overflow: hidden;
+  }
+  .hero-avatar-inner img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+  .hero-avatar-initials { font-family: 'Bebas Neue', sans-serif; font-size: 5rem; color: var(--white-faint); }
+
+  .stat-card {
+    position: absolute;
+    background: rgba(10,22,40,0.9);
+    border: 1px solid var(--white-faint);
+    backdrop-filter: blur(20px);
+    padding: 14px 20px;
+    clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px));
+  }
+  .stat-card .stat-num { font-family: 'Bebas Neue', sans-serif; font-size: 1.6rem; color: var(--gold); letter-spacing: 0.05em; }
+  .stat-card .stat-label { font-size: 0.65rem; color: var(--white-dim); letter-spacing: 0.1em; text-transform: uppercase; }
+  .stat-1 { bottom: 40px; left: -20px; animation: float 4s ease-in-out infinite; }
+  .stat-2 { top: 40px; right: -30px; animation: float 4s ease-in-out 2s infinite; }
+
+
+  /* ORBITES — système JS, labels toujours horizontaux */
+  .orbit-system {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 0; height: 0;
+    pointer-events: none;
+  }
+  .orbit-ring {
+    position: absolute;
+    border-radius: 50%;
+    border: 1px dashed rgba(201,168,76,0.18);
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+  }
+  .orbit-particle {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+  }
+  .orbit-particle .dot {
+    width: 8px; height: 8px;
+    background: var(--gold);
+    border-radius: 50%;
+    box-shadow: 0 0 10px var(--gold), 0 0 20px rgba(201,168,76,0.3);
+    position: absolute;
+    transform: translate(-50%, -50%);
+  }
+  .orbit-particle .tag {
+    position: absolute;
+    white-space: nowrap;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.55rem;
+    letter-spacing: 0.14em;
+    color: var(--gold);
+    text-transform: uppercase;
+    background: rgba(5,13,26,0.9);
+    padding: 4px 10px;
+    border: 1px solid var(--gold-dim);
+    transform: translate(-50%, calc(-50% - 16px));
+  }
+
+  /* SECTION STRUCTURE */
+  section { position: relative; }
+  .section-inner { max-width: 1200px; margin: 0 auto; padding: 120px 60px; }
+  .section-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem; letter-spacing: 0.3em;
+    text-transform: uppercase; color: var(--gold);
+    margin-bottom: 16px; display: flex; align-items: center; gap: 12px;
+  }
+  .section-label::before { content: ''; width: 24px; height: 1px; background: var(--gold); }
+  .section-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(2.5rem, 5vw, 4rem);
+    letter-spacing: 0.03em; line-height: 1; margin-bottom: 60px;
+  }
+
+  /* ABOUT */
+  #about { background: linear-gradient(to bottom, var(--navy-deep), var(--navy-mid)); }
+  .about-grid { display: grid; grid-template-columns: 1fr 1.2fr; gap: 80px; align-items: start; }
+  .about-text { font-size: 1rem; line-height: 1.85; color: var(--text-body); margin-bottom: 20px; }
+  .about-text strong { color: var(--white); font-weight: 500; }
+  .skills-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 32px; }
+  .skill-item {
+    padding: 14px 18px;
+    background: var(--white-faint);
+    border-left: 2px solid var(--gold);
+    font-size: 0.8rem; font-weight: 500; letter-spacing: 0.05em; color: var(--white);
+    transition: background 0.3s, border-color 0.3s;
+  }
+  .skill-item:hover { background: rgba(201,168,76,0.1); border-color: var(--gold-light); }
+  .about-facts { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .fact-box {
+    padding: 28px 24px;
+    background: linear-gradient(135deg, rgba(15,32,64,0.8), rgba(10,22,40,0.8));
+    border: 1px solid var(--white-faint);
+    border-top: 2px solid var(--gold);
+    clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px));
+  }
+  .fact-box .fact-icon { font-size: 1.4rem; margin-bottom: 12px; }
+  .fact-box .fact-title { font-family: 'Space Mono', monospace; font-size: 0.6rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--gold); margin-bottom: 8px; }
+  .fact-box .fact-value { font-size: 0.9rem; color: var(--white); line-height: 1.5; }
+
+  /* EXPERIENCE */
+  #experience { background: var(--navy-mid); }
+  .exp-list { display: flex; flex-direction: column; gap: 40px; padding-left: 40px; position: relative; }
+  .exp-item {
+    display: grid; grid-template-columns: 160px 1fr; gap: 40px;
+    padding: 32px 36px;
+    background: linear-gradient(135deg, rgba(15,32,64,0.5), rgba(5,13,26,0.5));
+    border: 1px solid var(--white-faint);
+    position: relative; transition: border-color 0.3s;
+    clip-path: polygon(0 0, calc(100% - 16px) 0, 100% 16px, 100% 100%, 16px 100%, 0 calc(100% - 16px));
+  }
+  .exp-item:hover { border-color: var(--gold-dim); background: linear-gradient(135deg, rgba(15,32,64,0.8), rgba(5,13,26,0.8)); }
+  .exp-item::before {
+    content: ''; position: absolute;
+    left: -41px; top: 50%;
+    width: 8px; height: 8px;
+    background: var(--gold); border-radius: 50%;
+    transform: translateY(-50%);
+    box-shadow: 0 0 12px var(--gold);
+  }
+  .exp-date { font-family: 'Space Mono', monospace; font-size: 0.65rem; letter-spacing: 0.1em; color: var(--gold); padding-top: 4px; }
+  .exp-company { font-family: 'Bebas Neue', sans-serif; font-size: 1.4rem; letter-spacing: 0.05em; margin-bottom: 4px; }
+  .exp-role { font-size: 0.8rem; color: var(--gold); font-weight: 500; margin-bottom: 14px; letter-spacing: 0.05em; }
+  .exp-desc { font-size: 0.88rem; line-height: 1.7; color: var(--text-body); }
+  .exp-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+  .exp-tag { padding: 4px 12px; background: var(--white-faint); font-family: 'Space Mono', monospace; font-size: 0.6rem; letter-spacing: 0.1em; color: var(--white-dim); border: 1px solid var(--white-faint); }
+
+  /* PROJECTS */
+  #projects { background: linear-gradient(to bottom, var(--navy-mid), var(--navy-deep)); }
+  .projects-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 24px; }
+  .project-card {
+    background: linear-gradient(135deg, rgba(15,32,64,0.7), rgba(5,13,26,0.7));
+    border: 1px solid var(--white-faint);
+    overflow: hidden;
+    clip-path: polygon(0 0, calc(100% - 20px) 0, 100% 20px, 100% 100%, 20px 100%, 0 calc(100% - 20px));
+    transition: transform 0.3s, border-color 0.3s;
+    position: relative;
+  }
+  .project-card:hover { transform: translateY(-6px); border-color: var(--gold-dim); }
+  .project-card::before {
+    content: ''; position: absolute;
+    top: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, var(--gold), transparent);
+    opacity: 0; transition: opacity 0.3s;
+  }
+  .project-card:hover::before { opacity: 1; }
+  .project-thumb {
+    height: 200px;
+    background: linear-gradient(135deg, var(--navy-light), var(--navy-mid));
+    display: flex; align-items: center; justify-content: center;
+    position: relative; overflow: hidden;
+  }
+  .project-thumb img { width: 100%; height: 100%; object-fit: cover; object-position: top; transition: transform 0.4s; }
+  .project-card:hover .project-thumb img { transform: scale(1.04); }
+  .project-thumb-mindlok { background: linear-gradient(135deg, #0a1628, #0f2a4a, #071020); }
+  .project-thumb-mindlok::after {
+    content: 'MINDLOK'; position: absolute;
+    font-family: 'Bebas Neue', sans-serif; font-size: 3.5rem; letter-spacing: 0.1em;
+    color: rgba(59,125,216,0.15); user-select: none;
+  }
+  .project-thumb-iut1 { background: linear-gradient(135deg, #1a0828, #250a40, #0d0518); }
+  .project-thumb-iut2 { background: linear-gradient(135deg, #1a0808, #350a0a, #0d0505); }
+  .project-thumb-badge {
+    position: absolute; top: 16px; right: 16px;
+    padding: 4px 10px;
+    background: var(--gold); color: var(--navy-deep);
+    font-family: 'Space Mono', monospace; font-size: 0.55rem; letter-spacing: 0.1em; font-weight: 700;
+  }
+  .project-body { padding: 24px; }
+  .project-category { font-family: 'Space Mono', monospace; font-size: 0.6rem; letter-spacing: 0.2em; color: var(--gold); text-transform: uppercase; margin-bottom: 10px; }
+  .project-name { font-family: 'Bebas Neue', sans-serif; font-size: 1.6rem; letter-spacing: 0.05em; margin-bottom: 12px; }
+  .project-desc { font-size: 0.85rem; line-height: 1.7; color: var(--text-body); }
+
+  /* RECOMMANDATIONS */
+  #recommandations { background: linear-gradient(to bottom, var(--navy-deep), var(--navy-mid)); }
+  .reco-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }
+  .reco-card {
+    background: linear-gradient(135deg, rgba(15,32,64,0.7), rgba(5,13,26,0.7));
+    border: 1px solid var(--white-faint);
+    clip-path: polygon(0 0, calc(100% - 20px) 0, 100% 20px, 100% 100%, 20px 100%, 0 calc(100% - 20px));
+    overflow: hidden;
+    transition: border-color 0.3s, transform 0.3s;
+  }
+  .reco-card:hover { border-color: var(--gold-dim); transform: translateY(-4px); }
+  .reco-header { padding: 24px 24px 0; display: flex; align-items: flex-start; gap: 16px; margin-bottom: 16px; }
+  .reco-badge {
+    padding: 5px 12px;
+    background: linear-gradient(135deg, var(--gold), #a87a2a);
+    color: var(--navy-deep); font-family: 'Space Mono', monospace;
+    font-size: 0.58rem; font-weight: 700; letter-spacing: 0.1em;
+    white-space: nowrap; flex-shrink: 0; margin-top: 4px;
+  }
+  .reco-badge-purple { background: linear-gradient(135deg, #7b5ea7, #5a3d8a); color: var(--white); }
+  .reco-name { font-family: 'Bebas Neue', sans-serif; font-size: 1.3rem; letter-spacing: 0.05em; margin-bottom: 2px; }
+  .reco-role { font-size: 0.78rem; color: var(--gold); font-weight: 500; margin-bottom: 4px; }
+  .reco-period { font-family: 'Space Mono', monospace; font-size: 0.6rem; letter-spacing: 0.1em; color: var(--white-dim); text-transform: uppercase; }
+  .reco-summary { padding: 0 24px 20px; font-size: 0.85rem; line-height: 1.7; color: var(--text-body); }
+  .reco-summary strong { color: var(--white); }
+  .reco-img-wrap {
+    position: relative; cursor: zoom-in; overflow: hidden; height: 380px;
+    background: var(--navy-light);
+  }
+  .reco-img-wrap img {
+    width: 100%; height: 100%;
+    object-fit: cover; object-position: top;
+    transition: transform 0.4s ease;
+    filter: grayscale(10%) contrast(1.05);
+    display: block;
+  }
+  .reco-img-wrap:hover img { transform: scale(1.03); }
+  .reco-img-overlay {
+    position: absolute; inset: 0;
+    background: linear-gradient(to top, rgba(5,13,26,0.85) 0%, transparent 50%);
+    display: flex; align-items: flex-end; justify-content: center;
+    padding-bottom: 20px; opacity: 0; transition: opacity 0.3s;
+  }
+  .reco-img-wrap:hover .reco-img-overlay { opacity: 1; }
+  .reco-img-overlay span { font-family: 'Space Mono', monospace; font-size: 0.65rem; letter-spacing: 0.15em; color: var(--gold); text-transform: uppercase; }
+
+  /* LIGHTBOX */
+  .lightbox {
+    position: fixed; inset: 0;
+    background: rgba(5,13,26,0.96);
+    z-index: 1000;
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.3s;
+    backdrop-filter: blur(12px);
+  }
+  .lightbox.active { opacity: 1; pointer-events: all; }
+  .lightbox-inner {
+    position: relative; max-width: 700px; width: 90%; max-height: 90vh;
+    display: flex; flex-direction: column; align-items: center; gap: 16px;
+  }
+  .lightbox-inner img { max-height: 82vh; width: auto; max-width: 100%; object-fit: contain; border: 1px solid var(--white-faint); box-shadow: 0 40px 100px rgba(0,0,0,0.8); }
+  .lightbox-close {
+    position: absolute; top: -44px; right: 0;
+    background: none; border: 1px solid var(--white-faint);
+    color: var(--white-dim); font-size: 1rem;
+    width: 36px; height: 36px; cursor: pointer;
+    transition: color 0.3s, border-color 0.3s;
+  }
+  .lightbox-close:hover { color: var(--gold); border-color: var(--gold); }
+  .lightbox-caption { font-family: 'Space Mono', monospace; font-size: 0.65rem; letter-spacing: 0.15em; color: var(--gold); text-transform: uppercase; }
+
+  /* CONTACT */
+  #contact { background: var(--navy-deep); border-top: 1px solid var(--white-faint); }
+  .contact-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: center; }
+  .contact-headline { font-family: 'Bebas Neue', sans-serif; font-size: clamp(3rem, 6vw, 5.5rem); line-height: 0.9; letter-spacing: 0.02em; margin-bottom: 24px; }
+  .contact-headline span { display: block; background: linear-gradient(135deg, var(--gold-light), var(--gold)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  .contact-sub { font-size: 0.95rem; line-height: 1.7; color: var(--text-body); margin-bottom: 48px; }
+  .contact-info { display: flex; flex-direction: column; gap: 16px; }
+  .contact-row { display: flex; align-items: center; gap: 20px; padding: 18px 24px; background: var(--white-faint); border-left: 2px solid var(--gold-dim); transition: background 0.3s, border-color 0.3s; }
+  .contact-row:hover { background: rgba(201,168,76,0.08); border-color: var(--gold); }
+  .contact-row .contact-icon { width: 36px; height: 36px; background: var(--gold-dim); display: flex; align-items: center; justify-content: center; font-size: 1rem; flex-shrink: 0; }
+  .contact-row .contact-label { font-family: 'Space Mono', monospace; font-size: 0.6rem; letter-spacing: 0.15em; color: var(--gold); text-transform: uppercase; margin-bottom: 2px; }
+  .contact-row .contact-value { font-size: 0.9rem; color: var(--white); }
+  .contact-row a { color: var(--white); text-decoration: none; transition: color 0.3s; }
+  .contact-row a:hover { color: var(--gold); }
+  .contact-right { display: flex; flex-direction: column; gap: 20px; }
+  .open-to { padding: 32px; background: linear-gradient(135deg, rgba(59,125,216,0.1), rgba(10,22,40,0.8)); border: 1px solid rgba(59,125,216,0.2); border-top: 2px solid var(--accent-blue); clip-path: polygon(0 0, calc(100% - 16px) 0, 100% 16px, 100% 100%, 16px 100%, 0 calc(100% - 16px)); }
+  .open-to-title { font-family: 'Space Mono', monospace; font-size: 0.65rem; letter-spacing: 0.2em; color: var(--accent-blue); margin-bottom: 12px; text-transform: uppercase; }
+  .open-to-text { font-size: 0.9rem; color: var(--text-body); line-height: 1.6; }
+  .open-to-text strong { color: var(--white); }
+
+  /* FOOTER */
+  footer { padding: 32px 60px; border-top: 1px solid var(--white-faint); display: flex; align-items: center; justify-content: space-between; }
+  .footer-logo { font-family: 'Bebas Neue', sans-serif; font-size: 1.2rem; letter-spacing: 0.2em; color: var(--gold); }
+  .footer-text { font-family: 'Space Mono', monospace; font-size: 0.6rem; letter-spacing: 0.1em; color: var(--white-dim); }
+
+  .divider { width: 100%; height: 1px; background: linear-gradient(90deg, transparent, var(--white-faint), transparent); margin: 0; }
+
+  /* ANIMATIONS */
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+  @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+
+  .reveal { opacity: 0; transform: translateY(40px); transition: opacity 0.7s ease, transform 0.7s ease; }
+  .reveal.visible { opacity: 1; transform: translateY(0); }
+
+  /* Responsive */
+  @media (max-width: 900px) {
+    nav { padding: 20px 24px; }
+    .nav-links { display: none; }
+    #hero { grid-template-columns: 1fr; padding: 120px 24px 80px; }
+    .hero-visual { display: none; }
+    .section-inner { padding: 80px 24px; }
+    .about-grid, .contact-grid { grid-template-columns: 1fr; gap: 40px; }
+    .exp-item { grid-template-columns: 1fr; gap: 8px; }
+    .reco-grid { grid-template-columns: 1fr; }
+    .reco-img-wrap { height: 300px; }
+    footer { flex-direction: column; gap: 12px; text-align: center; padding: 24px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+
+<!-- NAV -->
+<nav>
+  <a href="#hero" class="nav-logo">MG</a>
+  <ul class="nav-links">
+    <li><a href="#about">Profil</a></li>
+    <li><a href="#projects">Projets</a></li>
+    <li><a href="#recommandations">Recommandations</a></li>
+    <li><a href="#contact">Contact</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-grid-lines"></div>
+  <div class="hero-content">
+    <h1 class="hero-name">
+      <span>MAÉ</span>
+      <span class="name-accent">GUILLERMO</span>
+    </h1>
+    <p class="hero-role">
+      Étudiant en Techniques de Commercialisation à l'IUT de Cannes.<br>
+      J'aime beaucoup le marketing digital et l'entrepreneuriat —<br>
+      <strong>autonome, force de proposition, orienté résultats.</strong>
+    </p>
+    <div class="hero-cta">
+      <a href="#projects" class="btn-primary">Voir mes projets</a>
+      <a href="#contact" class="btn-secondary">Me contacter</a>
+    </div>
+  </div>
+  <div class="hero-visual">
+    <div class="hero-avatar-wrap">
+      <div class="hero-avatar-ring"></div>
+      <div class="hero-avatar-inner">
+<img src="photo-pro-moi.png" alt="Maé Guillermo">
+      </div>
+      <div class="orbit-system" id="orbitSystem"></div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ABOUT -->
+<section id="about">
+  <div class="section-inner">
+    <div class="section-label">01 — Profil</div>
+    <h2 class="section-title">À PROPOS<br>DE MOI</h2>
+    <div class="about-grid reveal">
+      <div>
+        <p class="about-text">
+          Étudiant en <strong>Techniques de Commercialisation</strong> à l'IUT de Cannes depuis septembre 2025, je m'intéresse particulièrement au marketing digital et à l'entrepreneuriat.
+        </p>
+        <p class="about-text">
+          Je travaille de manière autonome et prends des initiatives facilement. Lors de mon stage chez PerfPartsBike, mon responsable m'a rapidement confié des missions en totale autonomie — développement web, démarchage et gestion des réseaux sociaux.
+        </p>
+        <p class="about-text">
+          Je m'adapte bien au travail en équipe et m'intègre facilement dans un groupe, que ce soit sur des projets académiques ou professionnels.
+        </p>
+        <p class="about-text">
+          En parallèle de mes études, je développe <strong>Mindlok</strong>, une application mobile de productivité pour étudiants — un projet personnel qui me permet d'appliquer concrètement ce que j'apprends.
+        </p>
+        <div class="skills-grid">
+          <div class="skill-item">Marketing digital</div>
+          <div class="skill-item">Gestion de projet</div>
+          <div class="skill-item">Canva & Design</div>
+          <div class="skill-item">Microsoft Excel</div>
+          <div class="skill-item">Autonomie</div>
+          <div class="skill-item">Prise de décision</div>
+        </div>
+      </div>
+      <div class="about-facts">
+        <div class="fact-box">
+          <div class="fact-icon">🎓</div>
+          <div class="fact-title">Formation</div>
+          <div class="fact-value">BUT Techniques de Commercialisation<br>IUT de Cannes · 2025–2028</div>
+        </div>
+        <div class="fact-box">
+          <div class="fact-icon">📍</div>
+          <div class="fact-title">Localisation</div>
+          <div class="fact-value">Alpes-Maritimes<br>Entre Cannes & Nice</div>
+        </div>
+        <div class="fact-box">
+          <div class="fact-icon">🚀</div>
+          <div class="fact-title">Projet actif</div>
+          <div class="fact-value">Mindlok — App mobile<br>Productivité étudiante</div>
+        </div>
+        <div class="fact-box">
+          <div class="fact-icon">💡</div>
+          <div class="fact-title">Objectif</div>
+          <div class="fact-value">Alternance ou stage<br>en marketing digital</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<div class="divider"></div>
+
+<!-- PROJECTS -->
+<section id="projects">
+  <div class="section-inner">
+    <div class="section-label">02 — Réalisations</div>
+    <h2 class="section-title">MES<br>PROJETS</h2>
+    <div class="projects-grid reveal">
+
+      <!-- MINDLOK -->
+      <div class="project-card">
+        <div class="project-thumb project-thumb-mindlok">
+          <div class="project-thumb-badge">EN COURS</div>
+          <svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="22" y="10" width="36" height="60" rx="6" stroke="rgba(59,125,216,0.4)" stroke-width="1.5"/>
+            <rect x="28" y="20" width="24" height="3" rx="1.5" fill="rgba(59,125,216,0.3)"/>
+            <rect x="28" y="28" width="18" height="3" rx="1.5" fill="rgba(59,125,216,0.2)"/>
+            <circle cx="40" cy="48" r="8" stroke="rgba(201,168,76,0.5)" stroke-width="1.5"/>
+            <path d="M37 48l2 2 4-4" stroke="rgba(201,168,76,0.7)" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="project-body">
+          <div class="project-category">App Mobile · Productivité · React Native</div>
+          <div class="project-name">MINDLOK</div>
+          <p class="project-desc">
+            Application mobile de productivité pour étudiants. Le principe : tu mises une somme d'argent avant ta session de travail, et si tu décroches (téléphone, notifications), une déduction automatique est faite via Stripe. L'idée, c'est de transformer la procrastination en motivation financière. Développée en React Native / Expo, backend Supabase, paiements Stripe. Projet perso que je construis en parallèle de mes études.
+          </p>
+        </div>
+      </div>
+
+      <!-- AFFICHE CANNES CINÉMA -->
+      <div class="project-card">
+        <div class="project-thumb project-thumb-iut2">
+          <div class="project-thumb-badge">IUT · PARTIEL</div>
+          <img src="affiche-cannes-cinema.jpg" alt="Affiche Cannes Cinéma">
+        </div>
+        <div class="project-body">
+          <div class="project-category">Design graphique · Travail de groupe · IUT TC1</div>
+          <div class="project-name">CANNES CINÉMA</div>
+          <p class="project-desc">
+            Affiche publicitaire réalisée en groupe dans le cadre d'un partiel à l'IUT. On a travaillé sur plusieurs versions en itérant à chaque fois — choix typographiques, traitement photo, mise en page et accroche — pour arriver à cette version finale. Exercice qui m'a appris à défendre des choix créatifs en groupe et à adapter un message à une cible.
+          </p>
+        </div>
+      </div>
+
+      <!-- PROJET — RESTOS DU COEUR -->
+      <div class="project-card">
+        <div class="project-thumb project-thumb-iut1">
+          <div class="project-thumb-badge">IUT · PARTIEL</div>
+          <svg width="72" height="72" viewBox="0 0 72 72" fill="none">
+            <circle cx="36" cy="36" r="26" stroke="rgba(180,120,220,0.25)" stroke-width="1.5"/>
+            <path d="M24 36 Q36 22 48 36 Q36 50 24 36Z" stroke="rgba(220,100,100,0.4)" stroke-width="1.5" fill="rgba(220,100,100,0.08)"/>
+            <path d="M28 42 L32 38 M36 44 L38 40 M42 42 L44 38" stroke="rgba(180,120,220,0.35)" stroke-width="1" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="project-body">
+          <div class="project-category">Démarchage téléphonique · Terrain · IUT TC1</div>
+          <div class="project-name">RESTOS DU CŒUR</div>
+          <p class="project-desc">
+            Projet de partiel réalisé en groupe à l'IUT : démarchage téléphonique auprès d'une cinquantaine d'entreprises locales pour solliciter des dons au profit des Restos du Cœur de Cannes. L'exercice était à la fois commercial et humain — on a dû préparer un argumentaire, gérer les refus, relancer et suivre les retours. Une bonne façon de se confronter au vrai démarchage, pas juste en théorie.
+          </p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- RECOMMANDATIONS -->
+<section id="recommandations">
+  <div class="section-inner">
+    <div class="section-label">03 — Références</div>
+    <h2 class="section-title">LETTRES DE<br>RECOMMANDATION</h2>
+    <div class="reco-grid reveal">
+
+      <div class="reco-card">
+        <div class="reco-header">
+          <div class="reco-badge">Stage 2026</div>
+          <div class="reco-meta">
+            <div class="reco-name">Pereira Terry</div>
+            <div class="reco-role">Directeur — PerfPartsBike · Paris</div>
+            <div class="reco-period">Janvier – Février 2026</div>
+          </div>
+        </div>
+        <p class="reco-summary">
+          Rédigée à la fin de mon stage chez PerfPartsBike. Terry Pereira souligne mon <strong>sérieux, mon implication et ma capacité d'adaptation</strong>, et dit que je prends des initiatives quand c'est nécessaire. Il mentionne aussi ma ponctualité et mes qualités relationnelles avec les collègues et les clients.
+        </p>
+        <div class="reco-img-wrap" onclick="openLightbox('lettre-reco-perfpartsbike.jpg', 'Lettre de recommandation — PerfPartsBike')">
+          <img src="lettre-reco-perfpartsbike.jpg" alt="Lettre de recommandation PerfPartsBike" loading="lazy">
+          <div class="reco-img-overlay"><span>🔍 Agrandir</span></div>
+        </div>
+      </div>
+
+      <div class="reco-card">
+        <div class="reco-header">
+          <div class="reco-badge reco-badge-purple">Lycée · Terminale</div>
+          <div class="reco-meta">
+            <div class="reco-name">Barbara Biblemont</div>
+            <div class="reco-role">Professeure d'Anglais — Lycée H. Matisse · Vence</div>
+            <div class="reco-period">Recommandation de terminale</div>
+          </div>
+        </div>
+        <p class="reco-summary">
+          Recommandation écrite par ma prof d'anglais au lycée Henri Matisse à Vence, qui m'a suivi pendant deux ans jusqu'en terminale. Elle parle de ma <strong>curiosité intellectuelle, de ma participation active</strong> en cours et de ma capacité à bien travailler en groupe sur des projets variés.
+        </p>
+        <div class="reco-img-wrap" onclick="openLightbox('lettre-reco-biblemont.jpg', 'Lettre de recommandation — Barbara Biblemont')">
+          <img src="lettre-reco-biblemont.jpg" alt="Lettre de recommandation Barbara Biblemont" loading="lazy">
+          <div class="reco-img-overlay"><span>🔍 Agrandir</span></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- LIGHTBOX -->
+<div class="lightbox" id="lightbox" onclick="closeLightbox()">
+  <div class="lightbox-inner">
+    <button class="lightbox-close" onclick="closeLightbox()">✕</button>
+    <div class="lightbox-caption" id="lightboxCaption"></div>
+    <img id="lightboxImg" src="" alt="">
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- CONTACT -->
+<section id="contact">
+  <div class="section-inner">
+    <div class="contact-grid reveal">
+      <div>
+        <div class="section-label">04 — Contact</div>
+        <h2 class="contact-headline">
+          UNE QUESTION,<br>
+          <span>UNE OPPORTUNITÉ ?</span>
+        </h2>
+        <p class="contact-sub">
+          Je suis à la recherche d'une alternance ou d'un stage en marketing digital. Si mon profil vous intéresse, n'hésitez pas à me contacter directement — je réponds vite.
+        </p>
+        <div class="contact-info">
+          <div class="contact-row">
+            <div class="contact-icon">✉</div>
+            <div>
+              <div class="contact-label">Email</div>
+              <div class="contact-value"><a href="mailto:mae.guillermo2@gmail.com">mae.guillermo2@gmail.com</a></div>
+            </div>
+          </div>
+          <div class="contact-row">
+            <div class="contact-icon">📞</div>
+            <div>
+              <div class="contact-label">Téléphone</div>
+              <div class="contact-value"><a href="tel:0783328046">07 83 32 80 46</a></div>
+            </div>
+          </div>
+          <div class="contact-row">
+            <div class="contact-icon">in</div>
+            <div>
+              <div class="contact-label">LinkedIn</div>
+              <div class="contact-value"><a href="https://www.linkedin.com/in/mae-guillermo-33b403362/" target="_blank">mae-guillermo</a></div>
+            </div>
+          </div>
+          <div class="contact-row">
+            <div class="contact-icon">📍</div>
+            <div>
+              <div class="contact-label">Localisation</div>
+              <div class="contact-value">Alpes-Maritimes · Carros / Cannes</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="contact-right">
+        <div style="padding: 28px 32px; background: var(--white-faint); border: 1px solid var(--white-faint);">
+          <div style="font-family: 'Space Mono', monospace; font-size: 0.6rem; letter-spacing: 0.2em; color: var(--gold); margin-bottom: 16px; text-transform: uppercase;">Ce que j'apporte</div>
+          <div style="font-size: 0.88rem; color: var(--text-body); line-height: 1.8;">
+            ✦ Autonomie et initiative sans qu'on me le demande<br>
+            ✦ Prise de décision qui profite à l'équipe<br>
+            ✦ Expérience terrain : réseaux sociaux, prospection, site web<br>
+            ✦ Envie d'apprendre et de comprendre comment les choses marchent
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer style="padding:20px 60px; border-top: 1px solid var(--white-faint);"></footer>
+
+<script>
+  // Lightbox
+  function openLightbox(src, caption) {
+    document.getElementById('lightboxImg').src = src;
+    document.getElementById('lightboxCaption').textContent = caption;
+    document.getElementById('lightbox').classList.add('active');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeLightbox() {
+    document.getElementById('lightbox').classList.remove('active');
+    document.body.style.overflow = '';
+  }
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
+
+  // ORBITES — labels toujours horizontaux
+  (function() {
+    const sys = document.getElementById('orbitSystem');
+    if (!sys) return;
+
+    const orbits = [
+      { r: 210, speed: 0.4,  startAngle: 0,    label: 'Marketing Digital' },
+      { r: 250, speed: -0.28, startAngle: 120,  label: 'IUT Cannes · TC' },
+      { r: 290, speed: 0.18,  startAngle: 240,  label: 'Entrepreneuriat' },
+      { r: 230, speed: -0.35, startAngle: 60,   label: 'Autonomie' },
+      { r: 270, speed: 0.22,  startAngle: 180,  label: 'Mindlok' },
+    ];
+
+    // Draw orbit rings
+    orbits.forEach(o => {
+      const ring = document.createElement('div');
+      ring.className = 'orbit-ring';
+      ring.style.width  = o.r * 2 + 'px';
+      ring.style.height = o.r * 2 + 'px';
+      sys.appendChild(ring);
+    });
+
+    // Create particles
+    const particles = orbits.map(o => {
+      const p = document.createElement('div');
+      p.className = 'orbit-particle';
+      const dot = document.createElement('div');
+      dot.className = 'dot';
+      const tag = document.createElement('div');
+      tag.className = 'tag';
+      tag.textContent = o.label;
+      p.appendChild(dot);
+      p.appendChild(tag);
+      sys.appendChild(p);
+      return { el: p, tagEl: tag, angle: o.startAngle * Math.PI / 180, r: o.r, speed: o.speed };
+    });
+
+    let last = null;
+    function tick(ts) {
+      if (!last) last = ts;
+      const dt = (ts - last) / 1000;
+      last = ts;
+      particles.forEach(p => {
+        p.angle += p.speed * dt;
+        const x = Math.cos(p.angle) * p.r;
+        const y = Math.sin(p.angle) * p.r;
+        p.el.style.transform = `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`;
+        // tag always horizontal — no rotation needed since we use absolute positioning
+      });
+      requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  })();
+
+  // CURSOR — lerp fluide via RAF
+  const cursor = document.getElementById('cursor');
+  const ring   = document.getElementById('cursorRing');
+
+  let mx = window.innerWidth / 2,  my = window.innerHeight / 2;
+  let rx = mx, ry = my;
+  let rafId;
+
+  document.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; });
+
+  function tickCursor() {
+    // Dot suit instantanément
+    cursor.style.left = mx + 'px';
+    cursor.style.top  = my + 'px';
+
+    // Ring lerp — facteur 0.12 = fluide mais réactif
+    rx += (mx - rx) * 0.12;
+    ry += (my - ry) * 0.12;
+    ring.style.left = rx + 'px';
+    ring.style.top  = ry + 'px';
+
+    rafId = requestAnimationFrame(tickCursor);
+  }
+  tickCursor();
+
+  // Hover expand
+  document.querySelectorAll('a, button, .reco-img-wrap, .project-card').forEach(el => {
+    el.addEventListener('mouseenter', () => {
+      ring.style.width  = '52px';
+      ring.style.height = '52px';
+      ring.style.borderColor = 'var(--gold)';
+    });
+    el.addEventListener('mouseleave', () => {
+      ring.style.width  = '32px';
+      ring.style.height = '32px';
+      ring.style.borderColor = 'var(--gold-dim)';
+    });
+  });
+
+  // Scroll reveal
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+  }, { threshold: 0.1 });
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+  // Active nav
+  const sections = document.querySelectorAll('section[id]');
+  const navLinks = document.querySelectorAll('.nav-links a');
+  window.addEventListener('scroll', () => {
+    let current = '';
+    sections.forEach(s => { if (window.scrollY >= s.offsetTop - 120) current = s.id; });
+    navLinks.forEach(a => {
+      a.style.color = a.getAttribute('href') === '#' + current ? 'var(--gold)' : '';
+    });
+  });
+</script>
+</body>
+</html>
