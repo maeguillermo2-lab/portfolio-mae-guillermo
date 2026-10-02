@@ -40,7 +40,7 @@ button{cursor:none;font-family:inherit}
 /* ─── PER-ELEMENT ANIM ───────────────────────────────── */
 @keyframes fuUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
 @keyframes fuLeft{from{opacity:0;transform:translateX(-18px)}to{opacity:1;transform:translateX(0)}}
-[class*='a']{opacity:0}
+.a1,.a2,.a3,.a4,.a5,.a6,.a7,.a8{opacity:0}
 .playing .a1{animation:fuUp .48s .05s both}
 .playing .a2{animation:fuUp .48s .12s both}
 .playing .a3{animation:fuUp .48s .18s both}
@@ -228,7 +228,7 @@ button{cursor:none;font-family:inherit}
 .voy-tattoo{border:1px solid var(--bgold);padding:28px 24px;position:relative}
 .voy-tattoo::before{content:'OBJECTIF';position:absolute;top:-10px;left:18px;font-family:'Space Mono',monospace;font-size:.52rem;letter-spacing:.18em;color:var(--gold);background:var(--bg);padding:0 8px}
 .voy-tattoo-ico{font-size:2rem;margin-bottom:12px}
-.voy-tattoo p{font-size:.88rem;color:var(--txt2);line-height:1.8}
+.voy-tattoo p{font-size:.88rem;color:var(--txt);line-height:1.8}
 
 /* ════════════════════════════════════════════════════
    S8 — ANTI-MOUSTIQUE
@@ -263,7 +263,7 @@ button{cursor:none;font-family:inherit}
 /* ════════════════════════════════════════════════════
    S10 — CONTACT
 ══════════════════════════════════════════════════════ */
-#s10{background:#000;overflow:hidden;display:flex}
+#s10{background:#000;overflow:hidden;display:flex;flex-direction:row}
 .ct-poster{position:absolute;inset:0;background:linear-gradient(160deg,rgba(5,13,26,1) 0%,rgba(10,20,40,.98) 45%,rgba(5,10,20,.99) 100%);z-index:0}
 .ct-vline{position:absolute;left:38%;top:0;bottom:0;width:1px;background:linear-gradient(to bottom,transparent,var(--bgold) 20%,var(--bgold) 80%,transparent);z-index:1;opacity:.4}
 .ct-left{position:relative;z-index:2;width:38%;display:flex;flex-direction:column;justify-content:center;padding:80px 48px 80px 64px}
